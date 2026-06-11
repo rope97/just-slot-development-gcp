@@ -3,7 +3,7 @@ client:build:
   image: node:20
   script:
     - cd apps/game-client/game-client
-    - echo "VITE_API_URL=https://api-dev-justslots.duckdns.org" > .env
+    - echo "VITE_API_URL=http://api-dev-justslots.duckdns.org" > .env
     - npm install
     - npm run build
   artifacts:
