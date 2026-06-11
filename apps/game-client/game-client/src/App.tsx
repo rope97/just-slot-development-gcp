@@ -5,8 +5,9 @@ function App() {
 
   const loadPlayer = async () => {
     const res = await fetch(
-      '${import.meta.env.VITE_API_URL}/player/12345/stats'
+      `${import.meta.env.VITE_API_URL}/player/12345/stats`
     );
+
     const json = await res.json();
     setData(json);
   };
@@ -19,9 +20,7 @@ function App() {
         Load Player
       </button>
 
-      <pre>
-        {JSON.stringify(data, null, 2)}
-      </pre>
+      <pre>{JSON.stringify(data, null, 2)}</pre>
     </div>
   );
 }
