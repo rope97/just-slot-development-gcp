@@ -20,7 +20,7 @@ module "backend_workload" {
   source = "../../modules/backend-workload"
 
   image = "europe-west1-docker.pkg.dev/just-slots-499010/game-backend/api:1.0"
-  host  = "api-dev.slots.com"
+  host  = "api-dev-justslots.duckdns.org"
 }
 
 module "static_site" {

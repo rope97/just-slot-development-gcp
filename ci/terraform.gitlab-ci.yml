@@ -1,3 +1,8 @@
+stages:
+  - validate
+  - plan
+  - deploy
+
 terraform:fmt:
   stage: validate
   image: hashicorp/terraform:latest
@@ -14,12 +19,15 @@ terraform:validate:
     - terraform validate
 
 terraform:plan:
-  stage: validate
+  stage: plan
   image: hashicorp/terraform:latest
   script:
     - cd terraform/environments/dev
     - terraform init
-    - terraform plan
+    - terraform plan -out=tfplan
+  artifacts:
+    paths:
+      - terraform/environments/dev/tfplan
   only:
     - merge_requests
 
@@ -29,7 +37,7 @@ terraform:apply:
   script:
     - cd terraform/environments/dev
     - terraform init
-    - terraform apply -auto-approve
+    - terraform apply -auto-approve tfplan
+  when: manual
   only:
     - main
-  when: manual

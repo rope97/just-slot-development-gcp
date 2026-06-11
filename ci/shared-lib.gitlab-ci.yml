@@ -3,5 +3,18 @@ shared-lib:build:
   image: node:20
   script:
     - cd apps/game-shared
-    - npm install
+    - npm ci
     - npm run build
+
+shared-lib:publish:
+  stage: deploy
+  image: node:20
+  script:
+    - cd apps/game-shared
+    - npm ci
+    - npm run build
+
+    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+    - npm publish
+  only:
+    - main

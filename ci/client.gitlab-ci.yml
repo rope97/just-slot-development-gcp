@@ -3,8 +3,11 @@ client:build:
   image: node:20
   script:
     - cd apps/game-client/game-client
-    - npm install
+    - npm ci
     - npm run build
+  artifacts:
+    paths:
+      - apps/game-client/game-client/dist
 
 client:deploy:
   stage: deploy
@@ -12,6 +15,6 @@ client:deploy:
   script:
     - echo "$GCP_SERVICE_KEY" > key.json
     - gcloud auth activate-service-account --key-file=key.json
-    - gsutil -m rsync -r dist gs://just-slots-fe
+    - gsutil -m rsync -r apps/game-client/game-client/dist gs://just-slots-fe
   only:
     - main

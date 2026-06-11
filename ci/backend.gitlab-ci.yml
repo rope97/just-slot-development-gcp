@@ -15,32 +15,28 @@ backend:build:
     - docker:dind
   variables:
     DOCKER_DRIVER: overlay2
-
   script:
-    - |
-      echo "=== Backend Build ==="
+    - echo "=== Backend Build ==="
 
-      docker build -t $IMAGE:$CI_COMMIT_SHA ./apps/game-backend
+    - docker build -t $IMAGE:$CI_COMMIT_SHA ./apps/game-backend
+    - docker tag $IMAGE:$CI_COMMIT_SHA $IMAGE:latest
 
-      echo "Image built:"
-      echo "$IMAGE:$CI_COMMIT_SHA"
+    - echo "$GCP_SERVICE_KEY" | docker login -u _json_key --password-stdin https://$REGION-docker.pkg.dev
+
+    - docker push $IMAGE:$CI_COMMIT_SHA
+    - docker push $IMAGE:latest
 
 backend:deploy:
   stage: deploy
   image: google/cloud-sdk:slim
-
   script:
-    - |
-      echo "=== Deploy Stage ==="
+    - echo "$GCP_SERVICE_KEY" > key.json
+    - gcloud auth activate-service-account --key-file=key.json
+    - gcloud config set project $PROJECT_ID
+    - gcloud container clusters get-credentials just-slots-dev --region $REGION
 
-      echo "$GCP_SERVICE_KEY" > key.json
-      gcloud auth activate-service-account --key-file=key.json
-      gcloud config set project $PROJECT_ID
-
-      gcloud container clusters get-credentials just-slots-dev --region $REGION
-
-      kubectl set image deployment/game-backend backend=$IMAGE:$CI_COMMIT_SHA
-      kubectl rollout status deployment/game-backend
+    - kubectl set image deployment/game-backend backend=$IMAGE:$CI_COMMIT_SHA
+    - kubectl rollout status deployment/game-backend
 
   only:
     - main
