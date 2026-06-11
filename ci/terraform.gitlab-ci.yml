@@ -25,15 +25,19 @@ terraform:plan:
     - cd terraform/environments/dev
     - terraform init
     - terraform plan -out=tfplan
+    - terraform show -no-color tfplan > plan.txt
   artifacts:
     paths:
       - terraform/environments/dev/tfplan
+      - terraform/environments/dev/plan.txt
   only:
     - merge_requests
 
 terraform:apply:
   stage: deploy
   image: hashicorp/terraform:latest
+  needs:
+    - terraform:plan
   script:
     - cd terraform/environments/dev
     - terraform init
