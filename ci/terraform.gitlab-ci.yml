@@ -1,0 +1,35 @@
+terraform:fmt:
+  stage: validate
+  image: hashicorp/terraform:latest
+  script:
+    - cd terraform/environments/dev
+    - terraform fmt -check -recursive
+
+terraform:validate:
+  stage: validate
+  image: hashicorp/terraform:latest
+  script:
+    - cd terraform/environments/dev
+    - terraform init -backend=false
+    - terraform validate
+
+terraform:plan:
+  stage: validate
+  image: hashicorp/terraform:latest
+  script:
+    - cd terraform/environments/dev
+    - terraform init
+    - terraform plan
+  only:
+    - merge_requests
+
+terraform:apply:
+  stage: deploy
+  image: hashicorp/terraform:latest
+  script:
+    - cd terraform/environments/dev
+    - terraform init
+    - terraform apply -auto-approve
+  only:
+    - main
+  when: manual

@@ -1,0 +1,10 @@
+stages:
+  - validate
+  - build
+  - deploy
+
+include:
+  - local: 'ci/terraform.gitlab-ci.yml'
+  - local: 'ci/backend.gitlab-ci.yml'
+  - local: 'ci/client.gitlab-ci.yml'
+  - local: 'ci/shared-lib.gitlab-ci.yml'

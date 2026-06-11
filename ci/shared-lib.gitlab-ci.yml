@@ -1,0 +1,7 @@
+shared-lib:build:
+  stage: build
+  image: node:20
+  script:
+    - cd apps/game-shared
+    - npm install
+    - npm run build

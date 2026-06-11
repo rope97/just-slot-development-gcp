@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: game-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: game-backend
+  template:
+    metadata:
+      labels:
+        app: game-backend
+    spec:
+      containers:
+        - name: backend
+          image: europe-west1-docker.pkg.dev/just-slots-499010/game-backend/api:1.0
+          ports:
+            - containerPort: 3000
