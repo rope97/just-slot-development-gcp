@@ -16,6 +16,7 @@ backend:build:
   image: docker:24
   services:
     - docker:dind
+
   script:
     - |
       if [ "$CI_COMMIT_BRANCH" = "dev" ]; then
@@ -31,8 +32,8 @@ backend:build:
 
     - docker buildx create --use
 
-    # IMPORTANT: build image with ENV TAG
-    - docker buildx build \
+    - |
+      docker buildx build \
         --platform linux/amd64 \
         -t $IMAGE:$TAG \
         --push \
