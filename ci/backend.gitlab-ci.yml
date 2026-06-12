@@ -62,8 +62,7 @@ backend:deploy:
 
     - gcloud config set project $PROJECT_ID
     - gcloud container clusters get-credentials cluster-dev --region us-central1
-
-    - kubectl set image deployment/game-backend-$ENV backend=$IMAGE:$TAG
+    - kubectl set image deployment/game-backend-$ENV backend=$IMAGE:$CI_COMMIT_SHA
     - kubectl rollout status deployment/game-backend-$ENV --timeout=180s
     - kubectl rollout status deployment/game-backend-$ENV
 
