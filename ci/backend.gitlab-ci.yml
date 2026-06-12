@@ -8,51 +8,69 @@ variables:
   REPOSITORY: game-backend
   IMAGE: $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/api
 
+# -------------------------
+# BUILD
+# -------------------------
 backend:build:
   stage: build
   image: docker:24
   services:
     - docker:dind
-  variables:
-    DOCKER_DRIVER: overlay2
   script:
-    - echo "build-process"
-
-    # build image
     - docker build -t $IMAGE:$CI_COMMIT_SHA ./apps/game-backend
     - docker tag $IMAGE:$CI_COMMIT_SHA $IMAGE:latest
 
-    # GCP auth (NO KEYS - uses VM / runner identity)
     - gcloud auth configure-docker $REGION-docker.pkg.dev -q
 
-    # push
     - docker push $IMAGE:$CI_COMMIT_SHA
     - docker push $IMAGE:latest
 
-
+# -------------------------
+# DEPLOY DEV / STAGING / PROD
+# -------------------------
 backend:deploy:
   stage: deploy
   image: google/cloud-sdk:slim
   script:
-    - echo "=== Deploying to GKE ==="
+    - echo "=== DEPLOY START ==="
 
-    # authenticate via VM / attached service account
-    - gcloud auth configure-docker $REGION-docker.pkg.dev -q
+    # decide env from branch
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "dev" ]; then
+        ENV="dev"
+      elif [ "$CI_COMMIT_BRANCH" = "staging" ]; then
+        ENV="staging"
+      elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        ENV="production"
+      else
+        echo "No deploy for this branch"
+        exit 0
+      fi
+
+    # auth
     - gcloud config set project $PROJECT_ID
+    - gcloud container clusters get-credentials cluster-dev --region us-central1
 
-    # get cluster credentials
-    - gcloud container clusters get-credentials just-slots-dev --region $REGION
-
-    # deploy new image
-    - kubectl set image deployment/game-backend backend=$IMAGE:$CI_COMMIT_SHA
-    - kubectl rollout status deployment/game-backend
+    # deploy
+    - kubectl set image deployment/game-backend-$ENV backend=$IMAGE:$CI_COMMIT_SHA
+    - kubectl rollout status deployment/game-backend-$ENV
 
     # smoke test
-    - echo "=== Smoke test ==="
+    - |
+      if [ "$ENV" = "dev" ]; then
+        URL="http://api-dev-justslots.duckdns.org"
+      elif [ "$ENV" = "staging" ]; then
+        URL="http://api-staging-slots.duckdns.org"
+      else
+        URL="http://api-prod-slots.duckdns.org"
+      fi
+
     - sleep 10
-    - curl -f http://api-dev-justslots.duckdns.org/health || true
+    - curl -f $URL/health || echo "Smoke test failed"
 
-    - echo "SUCCESS"
-
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "staging"
+      when: manual
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual

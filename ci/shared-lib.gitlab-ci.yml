@@ -1,3 +1,7 @@
+stages:
+  - build
+  - publish
+
 shared-lib:build:
   stage: build
   image: node:20
@@ -5,16 +9,19 @@ shared-lib:build:
     - cd apps/game-shared
     - npm ci
     - npm run build
+  artifacts:
+    paths:
+      - apps/game-shared/dist
 
 shared-lib:publish:
-  stage: deploy
+  stage: publish
   image: node:20
   script:
     - cd apps/game-shared
     - npm ci
     - npm run build
 
-    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+    - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
     - npm publish
   only:
     - main

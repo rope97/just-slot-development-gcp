@@ -1,14 +1,15 @@
 resource "kubernetes_service" "backend" {
   metadata {
-    name = "game-backend-service"
+    name = "game-backend-service-${var.env}"
   }
 
   spec {
     selector = {
-      app = "game-backend"
+      app = "game-backend-${var.env}"
     }
 
-    type = "ClusterIP"
+    type = "NodePort"
+
     port {
       port        = 80
       target_port = 3000

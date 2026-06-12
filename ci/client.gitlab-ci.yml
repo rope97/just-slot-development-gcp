@@ -1,21 +1,59 @@
+stages:
+  - build
+  - deploy
+
+# --------------------
+# BUILD
+# --------------------
 client:build:
   stage: build
   image: node:20
   script:
     - cd apps/game-client/game-client
-    - echo "VITE_API_URL=http://api-dev-justslots.duckdns.org" > .env
-    - npm install
+
+    # set env dynamically
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "dev" ]; then
+        API_URL="http://api-dev-justslots.duckdns.org"
+      elif [ "$CI_COMMIT_BRANCH" = "staging" ]; then
+        API_URL="http://api-staging-slots.duckdns.org"
+      else
+        API_URL="http://api-prod-slots.duckdns.org"
+      fi
+
+    - echo "VITE_API_URL=$API_URL" > .env
+
+    - npm ci
     - npm run build
+
   artifacts:
     paths:
       - apps/game-client/game-client/dist
 
+# --------------------
+# DEPLOY
+# --------------------
 client:deploy:
   stage: deploy
   image: google/cloud-sdk:latest
   script:
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "dev" ]; then
+        BUCKET="just-slots-fe-dev"
+      elif [ "$CI_COMMIT_BRANCH" = "staging" ]; then
+        BUCKET="just-slots-fe-staging"
+      else
+        BUCKET="just-slots-fe-prod"
+      fi
+
     - echo "$GCP_SERVICE_KEY" > key.json
     - gcloud auth activate-service-account --key-file=key.json
-    - gsutil -m rsync -r apps/game-client/game-client/dist gs://just-slots-fe
-  only:
-    - main
+
+    - gsutil -m rsync -r apps/game-client/game-client/dist gs://$BUCKET
+
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "staging"
+      when: manual
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual

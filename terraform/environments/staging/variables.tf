@@ -1,3 +1,3 @@
-variable "env" {
+variable "image" {
   type = string
 }

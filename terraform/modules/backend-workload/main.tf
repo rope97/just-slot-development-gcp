@@ -1,37 +1,40 @@
 resource "kubernetes_deployment" "backend" {
+metadata {
+name = "game-backend-${var.env}"
+labels = {
+  app = "game-backend-${var.env}"
+}
+
+}
+
+spec {
+replicas = 1
+
+selector {
+  match_labels = {
+    app = "game-backend-${var.env}"
+  }
+}
+
+template {
   metadata {
-    name = "game-backend"
     labels = {
-      app = "game-backend"
+      app = "game-backend-${var.env}"
     }
   }
 
   spec {
-    replicas = 1
+    container {
+      name  = "backend"
+      image = var.image
 
-    selector {
-      match_labels = {
-        app = "game-backend"
-      }
-    }
-
-    template {
-      metadata {
-        labels = {
-          app = "game-backend"
-        }
-      }
-
-      spec {
-        container {
-          name  = "backend"
-          image = var.image
-
-          port {
-            container_port = 3000
-          }
-        }
+      port {
+        container_port = 3000
       }
     }
   }
 }
+
+}
+}
+

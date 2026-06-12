@@ -4,7 +4,7 @@ resource "kubernetes_manifest" "backend_cert" {
     kind       = "ManagedCertificate"
 
     metadata = {
-      name = "backend-cert"
+      name = "backend-cert-${var.env}"
       namespace = "default"
     }
 
@@ -18,11 +18,11 @@ resource "kubernetes_manifest" "backend_cert" {
 
 resource "kubernetes_ingress_v1" "backend" {
   metadata {
-    name = "game-backend-ingress"
+    name = "game-backend-ingress-${var.env}"
 
     annotations = {
       "kubernetes.io/ingress.class" = "gce"
-      "networking.gke.io/managed-certificates" = "backend-cert"
+    "networking.gke.io/managed-certificates" = "backend-cert-${var.env}"
     }
   }
 
