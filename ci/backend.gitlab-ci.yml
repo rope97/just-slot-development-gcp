@@ -1,4 +1,4 @@
-stages:
+istages:
   - build
   - deploy
 
@@ -17,13 +17,24 @@ backend:build:
   services:
     - docker:dind
   script:
-    - docker build -t $IMAGE:$CI_COMMIT_SHA ./apps/game-backend
-    - docker tag $IMAGE:$CI_COMMIT_SHA $IMAGE:latest
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "dev" ]; then
+        TAG="dev"
+      elif [ "$CI_COMMIT_BRANCH" = "staging" ]; then
+        TAG="staging"
+      elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        TAG="prod"
+      else
+        echo "No build for this branch"
+        exit 0
+      fi
+
+    - docker build -t $IMAGE:$TAG ./apps/game-backend
 
     - gcloud auth configure-docker $REGION-docker.pkg.dev -q
 
-    - docker push $IMAGE:$CI_COMMIT_SHA
-    - docker push $IMAGE:latest
+    - docker push $IMAGE:$TAG
+
 
 # -------------------------
 # DEPLOY DEV / STAGING / PROD
@@ -47,12 +58,12 @@ backend:deploy:
         exit 0
       fi
 
-    # auth
+    # auth + cluster
     - gcloud config set project $PROJECT_ID
     - gcloud container clusters get-credentials cluster-dev --region us-central1
 
-    # deploy
-    - kubectl set image deployment/game-backend-$ENV backend=$IMAGE:$CI_COMMIT_SHA
+    # deploy (IMPORTANT: env tag, not SHA)
+    - kubectl set image deployment/game-backend-$ENV backend=$IMAGE:$ENV
     - kubectl rollout status deployment/game-backend-$ENV
 
     # smoke test
@@ -62,7 +73,7 @@ backend:deploy:
       elif [ "$ENV" = "staging" ]; then
         URL="http://api-staging-slots.duckdns.org"
       else
-        URL="http://api-prod-slots.duckdns.org"
+        URL="http://api-slots.duckdns.org"
       fi
 
     - sleep 10
