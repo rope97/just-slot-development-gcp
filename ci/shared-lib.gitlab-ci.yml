@@ -14,7 +14,7 @@ shared-lib:build:
       - apps/game-shared/dist
 
 shared-lib:publish:
-  stage: publish
+  stage: deploy
   image: node:20
   script:
     - cd apps/game-shared
