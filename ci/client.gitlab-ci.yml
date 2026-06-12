@@ -45,10 +45,11 @@ client:deploy:
       else
         BUCKET="just-slots-fe-prod"
       fi
-    gcloud config set project $PROJECT_ID
-    gcloud auth configure-docker
+   
+       gcloud config set project $PROJECT_ID
+       gcloud auth configure-docker
 
-    - gsutil -m rsync -r apps/game-client/game-client/dist gs://$BUCKET
+       gsutil -m rsync -r apps/game-client/game-client/dist gs://$BUCKET
 
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
