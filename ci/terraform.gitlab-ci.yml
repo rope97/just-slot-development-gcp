@@ -5,6 +5,7 @@ stages:
 
 variables:
   TF_IN_AUTOMATION: "true"
+  TF_VAR_env: $TF_ENV
 
 workflow:
   rules:
