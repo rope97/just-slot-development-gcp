@@ -1,9 +1,10 @@
 stages:
+  - format
   - validate
   - plan
   - build
   - deploy
-
+  - publish
 include:
   - local: 'ci/terraform.gitlab-ci.yml'
   - local: 'ci/backend.gitlab-ci.yml'

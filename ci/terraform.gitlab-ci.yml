@@ -3,18 +3,33 @@ stages:
   - plan
   - deploy
 
+variables:
+  TF_IN_AUTOMATION: "true"
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+      variables:
+        TF_ENV: dev
+    - if: $CI_COMMIT_BRANCH == "staging"
+      variables:
+        TF_ENV: staging
+    - if: $CI_COMMIT_BRANCH == "main"
+      variables:
+        TF_ENV: production
+
 terraform:fmt:
   stage: validate
   image: hashicorp/terraform:latest
   script:
-    - cd terraform/environments/dev
+    - cd terraform/environments/$TF_ENV
     - terraform fmt -check -recursive
 
 terraform:validate:
   stage: validate
   image: hashicorp/terraform:latest
   script:
-    - cd terraform/environments/dev
+    - cd terraform/environments/$TF_ENV
     - terraform init -backend=false
     - terraform validate
 
@@ -22,26 +37,26 @@ terraform:plan:
   stage: plan
   image: hashicorp/terraform:latest
   script:
-    - cd terraform/environments/dev
+    - cd terraform/environments/$TF_ENV
     - terraform init
     - terraform plan -out=tfplan
     - terraform show -no-color tfplan > plan.txt
   artifacts:
     paths:
-      - terraform/environments/dev/tfplan
-      - terraform/environments/dev/plan.txt
-  only:
-    - merge_requests
+      - terraform/environments/$TF_ENV/tfplan
+      - terraform/environments/$TF_ENV/plan.txt
+  rules:
+    - if: $CI_COMMIT_BRANCH
 
 terraform:apply:
   stage: deploy
   image: hashicorp/terraform:latest
-  needs:
-    - terraform:plan
   script:
-    - cd terraform/environments/dev
+    - cd terraform/environments/$TF_ENV
     - terraform init
     - terraform apply -auto-approve tfplan
   when: manual
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "staging"
+    - if: $CI_COMMIT_BRANCH == "dev"
