@@ -25,19 +25,21 @@ backend:build:
       elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
         TAG="prod"
       else
-        echo "No build for this branch"
+        echo "No build"
         exit 0
       fi
 
-    - docker build -t $IMAGE:$TAG ./apps/game-backend
+    - docker buildx create --use
 
-    - gcloud auth configure-docker $REGION-docker.pkg.dev -q
-
-    - docker push $IMAGE:$TAG
-
+    # IMPORTANT: build image with ENV TAG
+    - docker buildx build \
+        --platform linux/amd64 \
+        -t $IMAGE:$TAG \
+        --push \
+        ./apps/game-backend
 
 # -------------------------
-# DEPLOY DEV / STAGING / PROD
+# DEPLOY
 # -------------------------
 backend:deploy:
   stage: deploy
@@ -45,24 +47,21 @@ backend:deploy:
   script:
     - echo "=== DEPLOY START ==="
 
-    # decide env from branch
     - |
       if [ "$CI_COMMIT_BRANCH" = "dev" ]; then
         ENV="dev"
       elif [ "$CI_COMMIT_BRANCH" = "staging" ]; then
         ENV="staging"
       elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
-        ENV="production"
+        ENV="prod"
       else
-        echo "No deploy for this branch"
         exit 0
       fi
 
-    # auth + cluster
     - gcloud config set project $PROJECT_ID
     - gcloud container clusters get-credentials cluster-dev --region us-central1
 
-    # deploy (IMPORTANT: env tag, not SHA)
+    # IMPORTANT: match TAG from build
     - kubectl set image deployment/game-backend-$ENV backend=$IMAGE:$ENV
     - kubectl rollout status deployment/game-backend-$ENV
 
