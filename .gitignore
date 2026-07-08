@@ -6,3 +6,5 @@ key.json
 *.pem
 .env
 builds/
+.node_modules/
+node_modules/
